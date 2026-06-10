@@ -48,6 +48,7 @@ class LoginWindow(QMainWindow):
 
     # ── Signal ───────────────────────────────────────────────────────────────
     login_successful = pyqtSignal(dict)
+    sign_up_requested = pyqtSignal()
 
     # ── Colour palette ────────────────────────────────────────────────────────
     C_LEFT_BG       = "#0D1117"
@@ -650,3 +651,4 @@ class LoginWindow(QMainWindow):
     def _handle_signup(self) -> None:
         """Open registration flow (extend as needed)."""
         logger.info("Sign-up requested")
+        self.sign_up_requested.emit()

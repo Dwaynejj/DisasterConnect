@@ -189,10 +189,16 @@ class MessagesWidget(QWidget):
         self.auth_manager = auth_manager
         self.db = db_connection.db
         
-        # Current user mockup
-        self.current_user = 'coordinator_01'
-        self.current_user_name = "System Coordinator"
+        if self.auth_manager and self.auth_manager.get_current_user():
+            user = self.auth_manager.get_current_user()
+            self.current_user = str(user.get('user_id', 'unknown'))
+            self.current_user_name = user.get('username', 'Unknown User')
+        else:
+            self.current_user = 'guest_01'
+            self.current_user_name = "Guest User"
+            
         self.active_thread_id = "General"
+        self.last_msg_count = 0
         
         self._seed_channels()
         
@@ -469,6 +475,8 @@ class MessagesWidget(QWidget):
             w = MessageBubble(msg.get("content", ""), sender_name, dt, is_me)
             self.msg_layout.insertWidget(self.msg_layout.count() - 1, w)
             
+        self.last_msg_count = len(msgs)
+            
         # Scroll to bottom
         QTimer.singleShot(50, lambda: self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum()))
 
@@ -498,13 +506,15 @@ class MessagesWidget(QWidget):
         self.load_messages()
         
     def poll_messages(self):
-        # In a real app we'd track last_fetch_timestamp to only get new ones.
-        # For this prototype, we'll just check if counts changed.
+        # Fetch the exact count of messages in the active thread from MongoDB
         count = self.db.messages.count_documents({"channel_id": self.active_thread_id})
-        # Approx check if we need to reload
-        current_msgs = self.msg_layout.count() - 1 # -1 for stretch
-        # It's better to just do a smart reload, but we'll brute force for safety on prototype
+        
+        # Always reload threads to update latest messages snippet on the sidebar
         self.load_threads()
+        
+        # If the number of messages has changed (e.g. someone else sent a message), reload the UI
+        if count != self.last_msg_count:
+            self.load_messages()
         
     def _toggle_emoji(self):
         if self.emoji_picker.isVisible():

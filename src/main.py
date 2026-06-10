@@ -9,6 +9,7 @@ from PyQt5.QtGui import QIcon
 
 from src.auth.auth_manager import AuthManager
 from src.auth.login_window import LoginWindow
+from src.auth.signup_widget import SignupWindow
 from src.dashboard.dashboard_window import DashboardWindow
 from src.widgets.splash_screen import SplashScreen
 from src.styles import load_stylesheet
@@ -45,16 +46,27 @@ class MainWindow(QMainWindow):
         
     def setup_ui(self):
         """Initialize all UI components"""
-        # Create login window
         self.login_window = LoginWindow(auth_manager=self.auth_manager)
         self.login_window.login_successful.connect(self.on_login_successful)
+        self.login_window.sign_up_requested.connect(self.show_signup)
         self.stacked_widget.addWidget(self.login_window)
+        
+        # Create signup window
+        self.signup_window = SignupWindow(auth_manager=self.auth_manager)
+        self.signup_window.switch_to_login.connect(self.show_login)
+        self.stacked_widget.addWidget(self.signup_window)
         
         # Create dashboard window
         self.dashboard_window = DashboardWindow(auth_manager=self.auth_manager)
         self.stacked_widget.addWidget(self.dashboard_window)
         
         # Set initial page
+        self.stacked_widget.setCurrentWidget(self.login_window)
+        
+    def show_signup(self):
+        self.stacked_widget.setCurrentWidget(self.signup_window)
+        
+    def show_login(self):
         self.stacked_widget.setCurrentWidget(self.login_window)
     
     def on_login_successful(self, user_data):
