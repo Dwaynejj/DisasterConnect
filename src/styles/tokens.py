@@ -1,0 +1,29 @@
+# Design Tokens for DisasterConnect
+
+LIGHT_TOKENS = {
+    "PRIMARY": "#1F6FEB",
+    "PRIMARY_DARK": "#1558C0",
+    "ACCENT_RED": "#E74C3C",
+    "ACCENT_AMBER": "#F39C12",
+    "SUCCESS": "#27AE60",
+    "BG_APP": "#F0F4F8",
+    "BG_SURFACE": "#FFFFFF",
+    "BG_SIDEBAR": "#161B22",
+    "TEXT_PRIMARY": "#1A1A2E",
+    "TEXT_SECONDARY": "#6C757D",
+    "BORDER": "#E5E7EB",
+}
+
+DARK_TOKENS = {
+    "PRIMARY": "#1F6FEB",
+    "PRIMARY_DARK": "#1558C0",
+    "ACCENT_RED": "#E74C3C",
+    "ACCENT_AMBER": "#F39C12",
+    "SUCCESS": "#27AE60",
+    "BG_APP": "#0D1117",
+    "BG_SURFACE": "#161B22",
+    "BG_SIDEBAR": "#161B22",
+    "TEXT_PRIMARY": "#E6EDF3",
+    "TEXT_SECONDARY": "#8B949E",
+    "BORDER": "#30363D",
+}

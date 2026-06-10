@@ -1,0 +1,11 @@
+{
+    "profile_img": "C:/Users/Safari/Downloads/uschi_du-cat-3261420_1920.jpg",
+    "theme": "System",
+    "primary_color": "#1F6FEB",
+    "font_size": 10,
+    "notif_incident": true,
+    "notif_status": true,
+    "notif_resource": false,
+    "notif_msg": true,
+    "notif_sound": true
+}

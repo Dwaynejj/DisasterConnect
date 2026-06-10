@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenStreetMap</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <style>
+        #map { height: 100vh; width: 100%; }
+        body { margin: 0; }
+        .incident-marker { 
+            width: 20px; 
+            height: 20px; 
+            background: red; 
+            border-radius: 50%; 
+        }
+        .resource-marker { 
+            width: 20px; 
+            height: 20px; 
+            background: blue; 
+            border-radius: 50%; 
+        }
+        .selected-marker { 
+            width: 20px; 
+            height: 20px; 
+            background: #4CAF50; 
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 4px rgba(0,0,0,0.4);
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        // Initialize map with doubleClickZoom disabled
+        var map = L.map('map', {
+            doubleClickZoom: false
+        }).setView([0, 0], 2);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: 'OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Initialize layers
+        var markers = L.markerClusterGroup({
+            chunkedLoading: true,
+            maxClusterRadius: 50,
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false,
+            zoomToBoundsOnClick: true
+        }).addTo(map);
+        
+        var heatLayer = L.heatLayer([], {
+            radius: 25,
+            blur: 15,
+            maxZoom: 10,
+            minOpacity: 0.4,
+            gradient: {
+                0.4: '#ffffb2',
+                0.6: '#fecc5c',
+                0.8: '#fd8d3c',
+                1.0: '#e31a1c'
+            }
+        }).addTo(map);
+        
+        var alertCircles = L.layerGroup().addTo(map);
+        var selectedMarker = null;
+        window.selectionMode = false;
+
+        // Initialize web channel for Python communication
+        new QWebChannel(qt.webChannelTransport, function(channel) {
+            window.pyQtCommunication = channel.objects.bridge;
+        });
+        
+        // Function to handle map clicks
+        function onMapClick(e) {
+            if (window.selectionMode) {
+                // Prevent the default zoom behavior
+                e.originalEvent.preventDefault();
+                e.originalEvent.stopPropagation();
+                
+                // Remove existing selection marker
+                if (selectedMarker) {
+                    markers.removeLayer(selectedMarker);
+                }
+                
+                // Create a new marker at the clicked location
+                selectedMarker = L.marker(e.latlng, {
+                    icon: L.divIcon({
+                        className: 'selected-marker',
+                        html: '',
+                        iconSize: [20, 20]
+                    })
+                }).addTo(markers);
+                
+                // Notify Python about the selection
+                if (window.pyQtCommunication) {
+                    window.pyQtCommunication.onLocationSelected(e.latlng.lat, e.latlng.lng);
+                }
+            }
+        }
+        
+        // Attach click handler
+        map.on('click', onMapClick);
+        
+        // Function to add incident marker
+        function addIncidentMarker(lat, lng, data) {
+            var marker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: 'incident-marker',
+                    html: '',
+                    iconSize: [20, 20]
+                })
+            }).addTo(markers);
+            
+            marker.bindPopup(
+                '<b>' + data.title + '</b><br>' +
+                'Type: ' + data.type + '<br>' +
+                'Severity: ' + data.severity + '<br>' +
+                'Status: ' + data.status
+            );
+        }
+        
+        // Function to add resource marker
+        function addResourceMarker(lat, lng, data) {
+            var marker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: 'resource-marker',
+                    html: '',
+                    iconSize: [20, 20]
+                })
+            }).addTo(markers);
+            
+            marker.bindPopup(
+                '<b>' + data.name + '</b><br>' +
+                'Type: ' + data.type + '<br>' +
+                'Status: ' + data.status + '<br>' +
+                'Capacity: ' + data.capacity
+            );
+        }
+        
+        // Function to clear all markers
+        function clearMarkers() {
+            markers.clearLayers();
+            selectedMarker = null;
+        }
+        
+        // Function to set selection mode
+        function setSelectionMode(enabled) {
+            window.selectionMode = enabled;
+            if (!enabled && selectedMarker) {
+                markers.removeLayer(selectedMarker);
+                selectedMarker = null;
+            }
+            // Disable zoom on click when in selection mode
+            if (enabled) {
+                map.scrollWheelZoom.disable();
+            } else {
+                map.scrollWheelZoom.enable();
+            }
+        }
+        
+        function toggleClustering(enabled) {
+            map.removeLayer(markers);
+            if (enabled) {
+                markers = L.markerClusterGroup({
+                    chunkedLoading: true,
+                    maxClusterRadius: 50,
+                    spiderfyOnMaxZoom: true,
+                    showCoverageOnHover: false,
+                    zoomToBoundsOnClick: true
+                });
+            } else {
+                markers = L.layerGroup();
+            }
+            map.addLayer(markers);
+            // Re-add all existing markers
+            refreshMarkers();
+        }
+        
+        function updateHeatmap(points) {
+            heatLayer.setLatLngs(points.map(p => [p.lat, p.lng, p.intensity]));
+        }
+        
+        function updateAlertRadius(lat, lng, radius, data) {
+            // Remove existing circle for this location
+            alertCircles.eachLayer((layer) => {
+                if (layer.getLatLng().lat === lat && layer.getLatLng().lng === lng) {
+                    alertCircles.removeLayer(layer);
+                }
+            });
+            
+            if (radius > 0) {
+                const circle = L.circle([lat, lng], {
+                    radius: radius,
+                    color: getAlertColor(data.severity),
+                    fillColor: getAlertColor(data.severity),
+                    fillOpacity: 0.2,
+                    weight: 1
+                }).bindPopup(`
+                    <b>${data.title}</b><br>
+                    Type: ${data.type}<br>
+                    Severity: ${data.severity}<br>
+                    Radius: ${radius/1000}km
+                `);
+                alertCircles.addLayer(circle);
+            }
+        }
+        
+        function getAlertColor(severity) {
+            switch (severity) {
+                case 'Critical': return '#e31a1c';
+                case 'High': return '#fd8d3c';
+                case 'Medium': return '#fecc5c';
+                case 'Low': return '#ffffb2';
+                default: return '#808080';
+            }
+        }
+        
+        function refreshMarkers() {
+            // Re-add all markers from current data
+            // This will be called when clustering is toggled
+            markers.getLayers().forEach(marker => {
+                markers.addLayer(marker);
+            });
+        }
+    </script>
+</body>
+</html>

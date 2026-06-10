@@ -1,0 +1,13 @@
+PyQt5==5.15.9
+PyQtWebEngine==5.15.6
+PyQtChart==5.15.6
+pymongo==4.5.0
+python-dotenv==1.0.0
+bcrypt==4.0.1
+reportlab==4.0.4
+# matplotlib 3.8+ and pandas 2.1.1+ have pre-built wheels for Python 3.12
+matplotlib>=3.8.0
+pandas>=2.1.1
+pytest==7.4.2
+Jinja2==3.1.2
+requests==2.31.0
