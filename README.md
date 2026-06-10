@@ -1,110 +1,100 @@
-# DisasterConnect
+# 🚨 DisasterConnect
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+> A powerful, modern, and feature-rich Desktop Application for Disaster and Emergency Response Management.
 
-A real-time disaster response coordination platform that helps connect resources with those in need during emergencies. This open-source project aims to provide a robust solution for disaster management teams worldwide.
+**DisasterConnect** is a comprehensive Python desktop application built with PyQt5 and MongoDB. It empowers emergency responders, administrators, and dispatchers to visualize critical incidents, allocate resources, and manage operations in real-time.
 
-## 🚀 Features
+---
 
-- 🌍 Real-time incident tracking with interactive map visualization
-- 📊 Resource allocation and tracking system
-- 💬 Communication system for coordinators
-- ✅ Task management for response teams
-- 📱 Responsive desktop interface
-- 🔒 Secure authentication system
-- 📊 Data visualization and reporting
+## ✨ Key Features
 
-## 🛠️ Tech Stack
+### 🛡️ Secure Authentication
+- **Role-Based Access Control:** Differentiates between Responders, Dispatchers, and Administrators.
+- **Robust Security:** Passwords hashed via `bcrypt` and session management using `PyJWT`.
+- **Validation:** Enforced password strength and secure credential checks.
 
-- **Backend:** Python 3.11
-- **Database:** MongoDB
-- **UI Framework:** PyQt5
-- **Maps:** Interactive mapping library
-- **Authentication:** JWT-based auth
-- **Reporting:** ReportLab, Matplotlib
+### 🗺️ Interactive Maps & Geography
+- **Live Folium Integration:** Uses `PyQtWebEngine` to render highly interactive maps seamlessly within the desktop interface.
+- **Incident Heatmaps:** Visualize incident density and severity dynamically.
+- **Location Picker:** Drop pins on the map to accurately log coordinates for new incidents and resources.
 
-## 📋 Prerequisites
+### 📋 Incident & Resource Management
+- **Dashboard Overview:** At-a-glance metrics for active emergencies and available resources.
+- **Bulk Actions:** Select multiple incidents or resources simultaneously to perform bulk updates, deletions, or CSV exports.
+- **Flexible Views:** Toggle between clean Table List views and modern Grid Card views for resource tracking.
 
-- Python 3.11 or higher
-- MongoDB
-- Git
+### 🎨 Beautiful, Modern UI
+- **Custom Design System:** Built from the ground up with a custom Qt Stylesheet (QSS) implementation.
+- **Theming:** Full support for Dynamic Light Mode, Dark Mode, and System Default syncing.
+- **Accent Colors:** Personalize the application with 6 custom primary color swatches (Blue, Green, Red, Amber, Purple, Cyan).
+- **Responsive Animations:** Fluid slide-in drawers and hover effects for a premium native feel.
 
-## 🚀 Quick Start
+---
 
-1. Clone and setup:
+## 🛠️ Technology Stack
+
+- **Frontend Interface:** [PyQt5](https://pypi.org/project/PyQt5/) & `PyQtWebEngine`
+- **Mapping Engine:** [Folium](https://python-visualization.github.io/folium/) & Leaflet.js
+- **Database:** [MongoDB](https://www.mongodb.com/) (`pymongo`)
+- **Security:** `bcrypt` & `PyJWT`
+- **Styling:** Custom QSS (Qt Stylesheets)
+
+---
+
+## 🚀 Setup & Installation
+
+### 1. Prerequisites
+- **Python 3.8+** installed on your system.
+- A running **MongoDB** instance (Local or Atlas).
+
+### 2. Clone the Repository
 ```bash
-git clone https://github.com/Razee4315/DisasterConnect.git
+git clone https://github.com/Dwaynejj/DisasterConnect.git
 cd DisasterConnect
+```
+
+### 3. Create a Virtual Environment
+```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# On Windows:
+venv\Scripts\activate
+# On Mac/Linux:
+source venv/bin/activate
+```
+
+### 4. Install Dependencies
+```bash
 pip install -r requirements.txt
 ```
 
-2. Configure environment:
-```bash
-cp .env.example .env
-# Edit .env with your configuration
+### 5. Configure Environment Variables
+Create a `.env` file in the root directory and populate it with your MongoDB connection string and a secret key:
+
+```env
+MONGODB_URI=mongodb://localhost:27017/  # Or your MongoDB Atlas URI
+MONGODB_DATABASE=disaster_connect
+SECRET_KEY=your_super_secret_jwt_key_here
 ```
 
-3. Run the application:
+*(Note: You can use `.env.example` as a template).*
+
+### 6. Run the Application
 ```bash
-python src/main.py
+python main.py
 ```
-
-## 📖 Documentation
-
-- [User Guide](docs/USER_GUIDE.md) - Detailed application usage
-- [API Documentation](docs/API.md) - API endpoints and usage
-- [Contributing Guidelines](CONTRIBUTING.md) - How to contribute
-- [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
-- [Security Policy](SECURITY.md) - Security and vulnerability reporting
-- [Changelog](CHANGELOG.md) - Version history and changes
-
-## 🤝 Contributing
-
-We believe in the power of community collaboration! Whether you're fixing bugs, adding features, or improving documentation, your contributions are welcome.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
-
-## 🔒 Security
-
-We take security seriously. If you discover any security-related issues, please follow our [Security Policy](SECURITY.md).
-
-## 📸 Project Screenshots
-
-Here are some snapshots of our DisasterConnect interface:
-
-![Screenshot 1](docs/screenshots/1.png)
-![Screenshot 2](docs/screenshots/2.png)
-![Screenshot 3](docs/screenshots/3.png)
-![Screenshot 4](docs/screenshots/4.png)
-![Screenshot 5](docs/screenshots/5.png)
-
-
-*These screenshots showcase various interfaces of our disaster response coordination platform.*
-
-## 💬 Community and Support
-
-- 📫 Contact: saqlainrazee@gmail.com
-- 🐛 [Report bugs](https://github.com/Razee4315/DisasterConnect/issues)
-- 💡 [Request features](https://github.com/Razee4315/DisasterConnect/issues)
-- 👥 [Discussions](https://github.com/Razee4315/DisasterConnect/discussions)
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👨‍💻 Author
-
-- **Saqlain Razee** - [Razee4315](https://github.com/Razee4315)
 
 ---
-⭐ Star this repository if you find it helpful!
+
+## 📸 Screenshots & Usage
+
+- **Dashboard:** Instantly see your map heatmaps and KPIs.
+- **Incidents Tab:** Track severity levels (Low, Medium, High, Critical) and update status (Active, Resolved, Under Review).
+- **Settings:** Head over to the Settings tab to switch on **Dark Mode** and pick your favorite accent color!
+
+---
+
+## 🤝 Contributing
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/Dwaynejj/DisasterConnect/issues).
+
+## 📝 License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
