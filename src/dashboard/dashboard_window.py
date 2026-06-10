@@ -506,6 +506,12 @@ class DashboardWindow(QMainWindow):
                 self.role_lbl.setText(role)
                 self.avatar.setText(initials)
                 self.top_avatar.setText(initials)
+                
+        # Propagate user info to child widgets so they can update their internal state
+        if hasattr(self, 'pages'):
+            for page in self.pages:
+                if hasattr(page, 'update_user_info'):
+                    page.update_user_info()
 
     def _handle_logout(self):
         if self.auth_manager and hasattr(self.auth_manager, 'logout'):

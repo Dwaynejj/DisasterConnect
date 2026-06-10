@@ -117,30 +117,42 @@ class ThreadItemWidget(QWidget):
         text_l.setSpacing(2)
         
         top_l = QHBoxLayout()
-        name_lbl = QLabel(name)
-        name_lbl.setStyleSheet("font-weight: bold; color: #111827;")
-        top_l.addWidget(name_lbl)
+        self.name_lbl = QLabel(name)
+        self.name_lbl.setStyleSheet("font-weight: bold; color: #111827;")
+        top_l.addWidget(self.name_lbl)
         top_l.addStretch()
-        time_lbl = QLabel(time_ago(dt))
-        time_lbl.setStyleSheet("color: #9CA3AF; font-size: 8pt;")
-        top_l.addWidget(time_lbl)
+        self.time_lbl = QLabel(time_ago(dt))
+        self.time_lbl.setStyleSheet("color: #9CA3AF; font-size: 8pt;")
+        top_l.addWidget(self.time_lbl)
         text_l.addLayout(top_l)
         
         btm_l = QHBoxLayout()
         msg_preview = last_msg[:37] + "..." if len(last_msg) > 40 else last_msg
-        msg_lbl = QLabel(msg_preview)
-        msg_lbl.setStyleSheet(f"color: {'#111827; font-weight: bold;' if unread_count > 0 else '#6B7280;'}")
-        btm_l.addWidget(msg_lbl)
+        self.msg_lbl = QLabel(msg_preview)
+        self.msg_lbl.setStyleSheet(f"color: {'#111827; font-weight: bold;' if unread_count > 0 else '#6B7280;'}")
+        btm_l.addWidget(self.msg_lbl)
         btm_l.addStretch()
         
-        if unread_count > 0:
-            badge = QLabel(str(unread_count))
-            badge.setStyleSheet("background-color: #EF4444; color: white; border-radius: 10px; padding: 2px 6px; font-weight: bold; font-size: 8pt;")
-            badge.setAlignment(Qt.AlignCenter)
-            btm_l.addWidget(badge)
+        self.badge = QLabel(str(unread_count))
+        self.badge.setStyleSheet("background-color: #EF4444; color: white; border-radius: 10px; padding: 2px 6px; font-weight: bold; font-size: 8pt;")
+        self.badge.setAlignment(Qt.AlignCenter)
+        self.badge.setVisible(unread_count > 0)
+        btm_l.addWidget(self.badge)
             
         text_l.addLayout(btm_l)
         layout.addLayout(text_l)
+
+    def update_data(self, last_msg, dt, unread_count):
+        self.time_lbl.setText(time_ago(dt))
+        msg_preview = last_msg[:37] + "..." if len(last_msg) > 40 else last_msg
+        self.msg_lbl.setText(msg_preview)
+        self.msg_lbl.setStyleSheet(f"color: {'#111827; font-weight: bold;' if unread_count > 0 else '#6B7280;'}")
+        
+        if unread_count > 0:
+            self.badge.setText(str(unread_count))
+            self.badge.setVisible(True)
+        else:
+            self.badge.setVisible(False)
 
 class MessageBubble(QWidget):
     def __init__(self, text, sender, dt, is_me=False):
@@ -189,16 +201,11 @@ class MessagesWidget(QWidget):
         self.auth_manager = auth_manager
         self.db = db_connection.db
         
-        if self.auth_manager and self.auth_manager.get_current_user():
-            user = self.auth_manager.get_current_user()
-            self.current_user = str(user.get('user_id', 'unknown'))
-            self.current_user_name = user.get('username', 'Unknown User')
-        else:
-            self.current_user = 'guest_01'
-            self.current_user_name = "Guest User"
+        self.update_user_info()
             
         self.active_thread_id = "General"
         self.last_msg_count = 0
+        self.last_total_msgs = -1
         
         self._seed_channels()
         
@@ -209,7 +216,20 @@ class MessagesWidget(QWidget):
         
         self.poll_timer = QTimer(self)
         self.poll_timer.timeout.connect(self.poll_messages)
-        self.poll_timer.start(5000)
+        self.poll_timer.start(2000)
+        
+    def update_user_info(self):
+        if self.auth_manager and self.auth_manager.get_current_user():
+            user = self.auth_manager.get_current_user()
+            self.current_user = str(user.get('user_id', 'unknown'))
+            self.current_user_name = user.get('username', 'Unknown User')
+        else:
+            self.current_user = 'guest_01'
+            self.current_user_name = "Guest User"
+            
+        # Re-render messages if they were already loaded so bubble colors update
+        if hasattr(self, 'msg_layout') and self.msg_layout.count() > 0:
+            self.load_messages()
         
     def _seed_channels(self):
         # Seed dummy messages if none exist
@@ -414,28 +434,33 @@ class MessagesWidget(QWidget):
             self.alert_banner.hide()
 
     def load_threads(self):
-        self.thread_list.clear()
-        
         channels = ["General", "Incident Alpha", "Resource Coord"]
         
-        for ch in channels:
+        # Determine if we need to completely rebuild or just update in place
+        needs_rebuild = self.thread_list.count() != len(channels)
+        
+        if needs_rebuild:
+            self.thread_list.clear()
+        
+        for idx, ch in enumerate(channels):
             last_msg = self.db.messages.find_one({"channel_id": ch}, sort=[("timestamp", -1)])
             content = last_msg["content"] if last_msg else "No messages yet"
             dt = last_msg["timestamp"] if last_msg else None
-            
-            # Count unread (mocking as 0 for now since read state needs per-user tracking)
             unread = 0 
             
-            item = QListWidgetItem(self.thread_list)
-            w = ThreadItemWidget(ch, content, dt, unread, is_channel=True)
-            item.setSizeHint(w.sizeHint())
-            
-            # Store ID in data
-            item.setData(Qt.UserRole, ch)
-            self.thread_list.setItemWidget(item, w)
-            
-            if ch == self.active_thread_id:
-                item.setSelected(True)
+            if needs_rebuild:
+                item = QListWidgetItem(self.thread_list)
+                w = ThreadItemWidget(ch, content, dt, unread, is_channel=True)
+                item.setSizeHint(w.sizeHint())
+                item.setData(Qt.UserRole, ch)
+                self.thread_list.setItemWidget(item, w)
+                if ch == self.active_thread_id:
+                    item.setSelected(True)
+            else:
+                item = self.thread_list.item(idx)
+                w = self.thread_list.itemWidget(item)
+                if w and hasattr(w, 'update_data'):
+                    w.update_data(content, dt, unread)
 
     def _on_thread_clicked(self, item):
         ch = item.data(Qt.UserRole)
@@ -506,15 +531,16 @@ class MessagesWidget(QWidget):
         self.load_messages()
         
     def poll_messages(self):
-        # Fetch the exact count of messages in the active thread from MongoDB
-        count = self.db.messages.count_documents({"channel_id": self.active_thread_id})
-        
-        # Always reload threads to update latest messages snippet on the sidebar
-        self.load_threads()
-        
-        # If the number of messages has changed (e.g. someone else sent a message), reload the UI
-        if count != self.last_msg_count:
-            self.load_messages()
+        # Fetch the total number of messages across the app to see if anything changed globally
+        total_msgs = self.db.messages.count_documents({})
+        if total_msgs != self.last_total_msgs:
+            self.last_total_msgs = total_msgs
+            self.load_threads() # Will now update in-place without flickering
+            
+            # Also check if the active thread's messages changed
+            count = self.db.messages.count_documents({"channel_id": self.active_thread_id})
+            if count != self.last_msg_count:
+                self.load_messages()
         
     def _toggle_emoji(self):
         if self.emoji_picker.isVisible():
