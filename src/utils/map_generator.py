@@ -1,10 +1,10 @@
 import folium
-from folium.plugins import HeatMap, MiniMap
+from folium.plugins import HeatMap, MiniMap, Geocoder
 
 def generate_dashboard_map(incidents, resources, show_heatmap=True, show_resources=True, show_incidents=True) -> str:
     """Generate the main dashboard map with clustering and heatmap layers."""
     # Base map centered on Ghana
-    m = folium.Map(location=[7.9465, -1.0232], zoom_start=7, tiles='CartoDB positron')
+    m = folium.Map(location=[7.9465, -1.0232], zoom_start=7, tiles='OpenStreetMap')
     
     # Severity color mapping
     severity_colors = {
@@ -110,11 +110,14 @@ def generate_dashboard_map(incidents, resources, show_heatmap=True, show_resourc
     # Layer Control
     folium.LayerControl().add_to(m)
     
+    # Geocoder Search Bar (add_marker=False is required for custom zoom to work)
+    Geocoder(position='topright', add_marker=False, zoom=18).add_to(m)
+    
     return m.get_root().render()
 
 def generate_incident_location_thumbnail(lat: float, lng: float, title: str) -> str:
     """Generate a small 280x160 map centered on the incident."""
-    m = folium.Map(location=[lat, lng], zoom_start=13, tiles='CartoDB positron', zoom_control=False)
+    m = folium.Map(location=[lat, lng], zoom_start=13, tiles='OpenStreetMap', zoom_control=False)
     
     folium.Marker(
         location=[lat, lng],
@@ -126,7 +129,10 @@ def generate_incident_location_thumbnail(lat: float, lng: float, title: str) -> 
 
 def generate_location_picker_map(initial_lat=7.9465, initial_lng=-1.0232) -> str:
     """Generate a map for selecting a location with a click, using a JS callback."""
-    m = folium.Map(location=[initial_lat, initial_lng], zoom_start=7, tiles='CartoDB positron')
+    m = folium.Map(location=[initial_lat, initial_lng], zoom_start=7, tiles='OpenStreetMap')
+    
+    # Add Search Bar for Landmarks
+    Geocoder(position='topright', add_marker=False, zoom=18).add_to(m)
     
     map_var = m.get_name()
     
